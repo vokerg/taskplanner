@@ -1,11 +1,11 @@
 package com.vokerg.taskplanner.api;
 
-import java.time.Instant;
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,17 +35,10 @@ public class TaskApi {
 
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        Task createdTask = task;
-
-        if (createdTask.getId() == null || createdTask.getId().isBlank()) {
-            createdTask.setId("task-" + Instant.now().toEpochMilli());
-        }
-
-        if (createdTask.getCreatedAt() == null) {
-            createdTask.setCreatedAt(Instant.now());
-        }
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+        Task createdTask = this.taskService.createTask(task);
+        return ResponseEntity
+            .created(URI.create("/api/tasks/" + createdTask.getId()))
+            .body(createdTask);
     }
 
     @GetMapping("/project/{projectId}")
@@ -53,5 +46,9 @@ public class TaskApi {
         return ResponseEntity.ok(this.taskService.getTasksForProject(projectId));
     }
 
-
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<Void> deleteTask(@PathVariable String taskId) {
+        this.taskService.removeTask(taskId);
+        return ResponseEntity.noContent().build();
+    }
 }

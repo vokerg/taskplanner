@@ -9,8 +9,8 @@ public class Task {
     private String id;
     private String title;
     private String description;
-    private String status;
-    private String priority;
+    private TaskStatus status;
+    private TaskPriority priority;
     private String projectId;
     private Instant createdAt;
     private Instant dueDate;
