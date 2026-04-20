@@ -7,8 +7,10 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.vokerg.taskplanner.dto.ChangeTaskStatus;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
 import com.vokerg.taskplanner.dto.TaskResponse;
+import com.vokerg.taskplanner.dto.UpdateTaskRequest;
 import com.vokerg.taskplanner.mapper.TaskMapper;
 import com.vokerg.taskplanner.model.Task;
 import com.vokerg.taskplanner.model.TaskPriority;
@@ -20,9 +22,9 @@ public class TaskService {
     @Autowired
     TaskMapper taskMapper;
 
-    public List<Task> getTasksForProject(String projectId) {
+    public List<TaskResponse> getTasksForProject(String projectId) {
         // Implementation for fetching tasks for a specific project
-        return List.of(createStubTask("task-1", projectId));
+        return List.of(this.taskMapper.mapTaskToResponse(this.createStubTask("task-1", projectId)));
     }
 
     private Task createStubTask(String taskId, String projectId) {
@@ -56,40 +58,17 @@ public class TaskService {
         return this.taskMapper.mapTaskToResponse(createdTask);
     }
 
-    public Optional<Task> patchTask(String taskId, Task task) {
-        Task existingTask = createStubTask(taskId, task.getProjectId());
-
-        if (task.getTitle() != null) {
-            existingTask.setTitle(task.getTitle());
-        }
-
-        if (task.getDescription() != null) {
-            existingTask.setDescription(task.getDescription());
-        }
-
-        if (task.getStatus() != null) {
-            existingTask.setStatus(task.getStatus());
-        }
-
-        if (task.getPriority() != null) {
-            existingTask.setPriority(task.getPriority());
-        }
-
-        if (task.getProjectId() != null) {
-            existingTask.setProjectId(task.getProjectId());
-        }
-
-        if (task.getCreatedAt() != null) {
-            existingTask.setCreatedAt(task.getCreatedAt());
-        }
-
-        if (task.getDueDate() != null) {
-            existingTask.setDueDate(task.getDueDate());
-        }
-
-        return Optional.of(existingTask);
+    public Optional<TaskResponse> changeTaskStatus(String taskId, ChangeTaskStatus request) {
+        Task existingTask = createStubTask(taskId, null);
+        existingTask.setStatus(request.status());
+        return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
     }
 
     public void removeTask(String taskId) {
+    }
+
+    public Optional<TaskResponse> replaceTask(String taskId, UpdateTaskRequest task) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'replaceTask'");
     }
 }

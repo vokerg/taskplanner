@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vokerg.taskplanner.dto.ChangeTaskStatus;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
 import com.vokerg.taskplanner.dto.TaskResponse;
 import com.vokerg.taskplanner.dto.UpdateTaskRequest;
-import com.vokerg.taskplanner.model.Task;
 import com.vokerg.taskplanner.service.TaskService;
 
 import jakarta.validation.Valid;
@@ -49,7 +49,7 @@ public class TaskApi {
     }
 
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<Task>> getTasksByProjectId(@PathVariable String projectId) {
+    public ResponseEntity<List<TaskResponse>> getTasksByProjectId(@PathVariable String projectId) {
         return ResponseEntity.ok(this.taskService.getTasksForProject(projectId));
     }
 
@@ -67,8 +67,8 @@ public class TaskApi {
     }
 
     @PatchMapping("/{taskId}")
-    public ResponseEntity<Task> updateTask(@PathVariable String taskId, @RequestBody Task task) {
-        return this.taskService.patchTask(taskId, task)
+    public ResponseEntity<TaskResponse> updateTask(@PathVariable String taskId, @Valid @RequestBody ChangeTaskStatus request) {
+        return this.taskService.changeTaskStatus(taskId, request)
             .map(ResponseEntity::ok)
             .orElseGet(() -> ResponseEntity.notFound().build());
     }
