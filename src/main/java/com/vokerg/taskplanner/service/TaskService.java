@@ -4,15 +4,22 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.vokerg.taskplanner.dto.CreateTaskRequest;
+import com.vokerg.taskplanner.dto.TaskResponse;
+import com.vokerg.taskplanner.mapper.TaskMapper;
 import com.vokerg.taskplanner.model.Task;
 import com.vokerg.taskplanner.model.TaskPriority;
 import com.vokerg.taskplanner.model.TaskStatus;
 
 @Service
 public class TaskService {
+
+    @Autowired
+    TaskMapper taskMapper;
+
     public List<Task> getTasksForProject(String projectId) {
         // Implementation for fetching tasks for a specific project
         return List.of(createStubTask("task-1", projectId));
@@ -30,31 +37,23 @@ public class TaskService {
         return task;
     }
 
-    public Optional<Task> getTaskById(String taskId) {
-        return Optional.of(createStubTask(taskId, null));
+    public Optional<TaskResponse> getTaskById(String taskId) {
+        return Optional.of(createStubTask(taskId, null)).map(task -> this.taskMapper.mapTaskToResponse(task));
     }
 
-    public @Nullable Task createTask(Task task) {
-        Task createdTask = task;
+    public TaskResponse createTask(CreateTaskRequest request) {
+        Task createdTask = new Task();
         Instant now = Instant.now();
 
-        if (createdTask.getId() == null || createdTask.getId().isBlank()) {
-            createdTask.setId("task-" + now.toEpochMilli());
-        }
+        createdTask.setId("task-" + now.toEpochMilli());
+        createdTask.setTitle(request.title());
+        createdTask.setDescription(request.description());
+        createdTask.setCreatedAt(now);
+        createdTask.setStatus(TaskStatus.TODO);
+        createdTask.setPriority(request.priority() != null ? request.priority() : TaskPriority.MEDIUM);
+        createdTask.setDueDate(request.dueDate());
 
-        if (createdTask.getCreatedAt() == null) {
-            createdTask.setCreatedAt(now);
-        }
-
-        if (createdTask.getStatus() == null) {
-            createdTask.setStatus(TaskStatus.TODO);
-        }
-
-        if (createdTask.getPriority() == null) {
-            createdTask.setPriority(TaskPriority.MEDIUM);
-        }
-
-        return createdTask;
+        return this.taskMapper.mapTaskToResponse(createdTask);
     }
 
     public Optional<Task> patchTask(String taskId, Task task) {

@@ -10,12 +10,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vokerg.taskplanner.dto.CreateTaskRequest;
+import com.vokerg.taskplanner.dto.TaskResponse;
+import com.vokerg.taskplanner.dto.UpdateTaskRequest;
 import com.vokerg.taskplanner.model.Task;
 import com.vokerg.taskplanner.service.TaskService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -25,20 +31,20 @@ public class TaskApi {
     TaskService taskService;
 
     @GetMapping
-    public ResponseEntity<List<Task>> getTasks() {
+    public ResponseEntity<List<TaskResponse>> getTasks() {
         return ResponseEntity.ok(List.of());
     }
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<Task> getTaskById(@PathVariable String taskId) {
+    public ResponseEntity<TaskResponse> getTaskById(@PathVariable String taskId) {
         return ResponseEntity.of(this.taskService.getTaskById(taskId));
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        Task createdTask = this.taskService.createTask(task);
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody CreateTaskRequest request) {
+        TaskResponse createdTask = this.taskService.createTask(request);
         return ResponseEntity
-            .created(URI.create("/api/tasks/" + createdTask.getId()))
+            .created(URI.create("/api/tasks/" + createdTask.id()))
             .body(createdTask);
     }
 
@@ -51,6 +57,13 @@ public class TaskApi {
     public ResponseEntity<Void> deleteTask(@PathVariable String taskId) {
         this.taskService.removeTask(taskId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{taskId}")
+    public ResponseEntity<TaskResponse> replaceTask(@PathVariable String taskId, @RequestBody UpdateTaskRequest task) {
+        return this.taskService.replaceTask(taskId, task)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{taskId}")
