@@ -36,14 +36,61 @@ public class TaskService {
 
     public @Nullable Task createTask(Task task) {
         Task createdTask = task;
+        Instant now = Instant.now();
 
         if (createdTask.getId() == null || createdTask.getId().isBlank()) {
-            createdTask.setId("task-" + Instant.now().toEpochMilli());
+            createdTask.setId("task-" + now.toEpochMilli());
         }
 
         if (createdTask.getCreatedAt() == null) {
-            createdTask.setCreatedAt(Instant.now());
+            createdTask.setCreatedAt(now);
         }
+
+        if (createdTask.getStatus() == null) {
+            createdTask.setStatus(TaskStatus.TODO);
+        }
+
+        if (createdTask.getPriority() == null) {
+            createdTask.setPriority(TaskPriority.MEDIUM);
+        }
+
         return createdTask;
+    }
+
+    public Optional<Task> patchTask(String taskId, Task task) {
+        Task existingTask = createStubTask(taskId, task.getProjectId());
+
+        if (task.getTitle() != null) {
+            existingTask.setTitle(task.getTitle());
+        }
+
+        if (task.getDescription() != null) {
+            existingTask.setDescription(task.getDescription());
+        }
+
+        if (task.getStatus() != null) {
+            existingTask.setStatus(task.getStatus());
+        }
+
+        if (task.getPriority() != null) {
+            existingTask.setPriority(task.getPriority());
+        }
+
+        if (task.getProjectId() != null) {
+            existingTask.setProjectId(task.getProjectId());
+        }
+
+        if (task.getCreatedAt() != null) {
+            existingTask.setCreatedAt(task.getCreatedAt());
+        }
+
+        if (task.getDueDate() != null) {
+            existingTask.setDueDate(task.getDueDate());
+        }
+
+        return Optional.of(existingTask);
+    }
+
+    public void removeTask(String taskId) {
     }
 }

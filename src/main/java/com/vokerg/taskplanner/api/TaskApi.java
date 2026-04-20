@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,5 +51,12 @@ public class TaskApi {
     public ResponseEntity<Void> deleteTask(@PathVariable String taskId) {
         this.taskService.removeTask(taskId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{taskId}")
+    public ResponseEntity<Task> updateTask(@PathVariable String taskId, @RequestBody Task task) {
+        return this.taskService.patchTask(taskId, task)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
