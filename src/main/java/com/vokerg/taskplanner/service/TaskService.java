@@ -31,11 +31,14 @@ public class TaskService {
     }
 
     public List<TaskResponse> getTasksForProject(String projectId) {
-        return List.of(this.taskMapper.mapTaskToResponse(this.taskRepository.getTasksByProjectId(projectId)));
+        return this.taskRepository.getTasksByProjectId(projectId).stream()
+            .map(this.taskMapper::mapTaskToResponse)
+            .toList();
     }
 
     public Optional<TaskResponse> getTaskById(String taskId) {
-        return Optional.of(this.taskRepository.getTaskById(taskId)).map(task -> this.taskMapper.mapTaskToResponse(task));
+        return Optional.ofNullable(this.taskRepository.getTaskById(taskId))
+            .map(this.taskMapper::mapTaskToResponse);
     }
 
     public TaskResponse createTask(String projectId, CreateTaskRequest request) {
@@ -56,16 +59,22 @@ public class TaskService {
         createdTask.setProjectId(projectId);
         createdTask.setDueDate(request.dueDate());
 
+        this.taskRepository.saveTask(createdTask);
+
         return this.taskMapper.mapTaskToResponse(createdTask);
     }
 
     public Optional<TaskResponse> changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
         Task existingTask = this.taskRepository.getTaskById(taskId);
+        if (existingTask == null) {
+            return Optional.empty();
+        }
         if (!allowedStatusTransition(existingTask.getStatus(), request.status())) {
 
             throw new BusinessRuleViolationException("Cannot move task back to IN_PROGRESS from DONE");
         }
         existingTask.setStatus(request.status());
+        this.taskRepository.saveTask(existingTask);
         return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
     }
 
@@ -79,15 +88,20 @@ public class TaskService {
     }
 
     public void removeTask(String taskId) {
+        this.taskRepository.deleteTask(taskId);
     }
 
     public Optional<TaskResponse> replaceTask(String taskId, UpdateTaskRequest task) {
         Task existingTask = this.taskRepository.getTaskById(taskId);
-            existingTask.setTitle(task.title());
-            existingTask.setDescription(task.description());
-            existingTask.setPriority(task.priority());
-            existingTask.setDueDate(task.dueDate());
-            
-            return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
+        if (existingTask == null) {
+            return Optional.empty();
+        }
+        existingTask.setTitle(task.title());
+        existingTask.setDescription(task.description());
+        existingTask.setPriority(task.priority());
+        existingTask.setDueDate(task.dueDate());
+        this.taskRepository.saveTask(existingTask);
+
+        return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
     }
 }

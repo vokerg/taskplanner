@@ -3,8 +3,6 @@ package com.vokerg.taskplanner.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 
 import com.vokerg.taskplanner.dto.CreateProjectRequest;
@@ -28,11 +26,12 @@ public class ProjectService {
     public List<ProjectResponse> getAllProjects() {
         return this.projectRepository.getAllProjects().stream()
                 .map(this.projectMapper::mapProjectToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public Optional<ProjectResponse> getProjectById(String projectId) {
-        return Optional.of(this.projectRepository.getProjectById(projectId)).map(project -> this.projectMapper.mapProjectToResponse(project));
+        return Optional.ofNullable(this.projectRepository.getProjectById(projectId))
+            .map(this.projectMapper::mapProjectToResponse);
     }
 
     public ProjectResponse createProject(CreateProjectRequest request) {
@@ -53,7 +52,7 @@ public class ProjectService {
     public Optional<ProjectResponse> updateProject(String projectId, UpdateProjectRequest request) {
         Project existingProject = this.projectRepository.getProjectById(projectId);
         if (existingProject == null) {
-            throw new BusinessRuleViolationException("Project not found");
+            return Optional.empty();
         }
         
         if (request.title() != null) {
@@ -74,7 +73,7 @@ public class ProjectService {
     public Optional<ProjectResponse> replaceProject(String projectId, UpdateProjectRequest request) {
         Project existingProject = this.projectRepository.getProjectById(projectId);
         if (existingProject == null) {
-            throw new BusinessRuleViolationException("Project not found");
+            return Optional.empty();
         }
 
         existingProject.setTitle(request.title());
@@ -87,5 +86,6 @@ public class ProjectService {
     }
 
     public void removeProject(String projectId) {
+        this.projectRepository.deleteProject(projectId);
     }
 }
