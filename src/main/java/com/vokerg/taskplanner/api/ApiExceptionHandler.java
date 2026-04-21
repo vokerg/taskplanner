@@ -1,9 +1,11 @@
 package com.vokerg.taskplanner.api;
 
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -29,6 +31,20 @@ public class ApiExceptionHandler {
         HttpServletRequest request
     ) {
         return this.buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidationFailure(
+        MethodArgumentNotValidException exception,
+        HttpServletRequest request
+    ) {
+        String message = exception.getBindingResult()
+            .getFieldErrors()
+            .stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .collect(Collectors.joining("; "));
+
+        return this.buildErrorResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
     private ResponseEntity<ApiErrorResponse> buildErrorResponse(
