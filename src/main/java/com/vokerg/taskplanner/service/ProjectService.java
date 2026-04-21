@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.vokerg.taskplanner.dto.CreateProjectRequest;
@@ -16,8 +15,11 @@ import com.vokerg.taskplanner.model.Project;
 @Service
 public class ProjectService {
 
-    @Autowired
-    ProjectMapper projectMapper;
+    private final ProjectMapper projectMapper;
+
+    public ProjectService(ProjectMapper projectMapper) {
+        this.projectMapper = projectMapper;
+    }
 
     public List<ProjectResponse> getAllProjects() {
         // Implementation for fetching all projects

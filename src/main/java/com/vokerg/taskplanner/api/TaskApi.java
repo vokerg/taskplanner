@@ -3,7 +3,6 @@ package com.vokerg.taskplanner.api;
 import java.net.URI;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,8 +26,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tasks")
 public class TaskApi {
 
-    @Autowired 
-    TaskService taskService;
+    private final TaskService taskService;
+
+    public TaskApi(TaskService taskService) {
+        this.taskService = taskService;
+    }
 
     @GetMapping
     public ResponseEntity<List<TaskResponse>> getTasks() {
@@ -60,7 +62,7 @@ public class TaskApi {
     }
 
     @PutMapping("/{taskId}")
-    public ResponseEntity<TaskResponse> replaceTask(@PathVariable String taskId, @RequestBody UpdateTaskRequest task) {
+    public ResponseEntity<TaskResponse> replaceTask(@PathVariable String taskId, @Valid @RequestBody UpdateTaskRequest task) {
         return this.taskService.replaceTask(taskId, task)
             .map(ResponseEntity::ok)
             .orElseGet(() -> ResponseEntity.notFound().build());

@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.vokerg.taskplanner.dto.ChangeTaskStatus;
@@ -19,8 +18,11 @@ import com.vokerg.taskplanner.model.TaskStatus;
 @Service
 public class TaskService {
 
-    @Autowired
-    TaskMapper taskMapper;
+    private final TaskMapper taskMapper;
+
+    public TaskService(TaskMapper taskMapper) {
+        this.taskMapper = taskMapper;
+    }
 
     public List<TaskResponse> getTasksForProject(String projectId) {
         // Implementation for fetching tasks for a specific project

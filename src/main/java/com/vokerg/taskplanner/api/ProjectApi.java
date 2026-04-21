@@ -3,7 +3,6 @@ package com.vokerg.taskplanner.api;
 import java.net.URI;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,8 +25,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/projects")
 public class ProjectApi {
 
-    @Autowired
-    ProjectService projectService;
+    private final ProjectService projectService;
+
+    public ProjectApi(ProjectService projectService) {
+        this.projectService = projectService;
+    }
 
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> getProjects() {
