@@ -3,6 +3,7 @@ package com.vokerg.taskplanner.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -11,33 +12,27 @@ import com.vokerg.taskplanner.dto.ProjectResponse;
 import com.vokerg.taskplanner.dto.UpdateProjectRequest;
 import com.vokerg.taskplanner.mapper.ProjectMapper;
 import com.vokerg.taskplanner.model.Project;
+import com.vokerg.taskplanner.repository.ProjectRepository;
 
 @Service
 public class ProjectService {
 
     private final ProjectMapper projectMapper;
+    private final ProjectRepository projectRepository;
 
-    public ProjectService(ProjectMapper projectMapper) {
+    public ProjectService(ProjectMapper projectMapper, ProjectRepository projectRepository) {
         this.projectMapper = projectMapper;
+        this.projectRepository = projectRepository;
     }
 
     public List<ProjectResponse> getAllProjects() {
-        // Implementation for fetching all projects
-        return List.of(this.projectMapper.mapProjectToResponse(this.createStubProject("project-1")));
-    }
-
-    private Project createStubProject(String projectId) {
-        Project project = new Project();
-        project.setId(projectId);
-        project.setTitle("Sample project");
-        project.setDescription("Stub response until persistence is added");
-        project.setCreatedAt(Instant.now());
-        project.setCompleted(false);
-        return project;
+        return this.projectRepository.getAllProjects().stream()
+                .map(this.projectMapper::mapProjectToResponse)
+                .collect(Collectors.toList());
     }
 
     public Optional<ProjectResponse> getProjectById(String projectId) {
-        return Optional.of(createStubProject(projectId)).map(project -> this.projectMapper.mapProjectToResponse(project));
+        return Optional.of(this.projectRepository.getProjectById(projectId)).map(project -> this.projectMapper.mapProjectToResponse(project));
     }
 
     public ProjectResponse createProject(CreateProjectRequest request) {
@@ -50,11 +45,16 @@ public class ProjectService {
         createdProject.setCreatedAt(now);
         createdProject.setCompleted(false);
 
+        this.projectRepository.saveProject(createdProject);
+
         return this.projectMapper.mapProjectToResponse(createdProject);
     }
 
     public Optional<ProjectResponse> updateProject(String projectId, UpdateProjectRequest request) {
-        Project existingProject = createStubProject(projectId);
+        Project existingProject = this.projectRepository.getProjectById(projectId);
+        if (existingProject == null) {
+            throw new BusinessRuleViolationException("Project not found");
+        }
         
         if (request.title() != null) {
             existingProject.setTitle(request.title());
@@ -65,13 +65,25 @@ public class ProjectService {
         if (request.completed() != null) {
             existingProject.setCompleted(request.completed());
         }
+
+        this.projectRepository.saveProject(existingProject);
         
         return Optional.of(this.projectMapper.mapProjectToResponse(existingProject));
     }
 
     public Optional<ProjectResponse> replaceProject(String projectId, UpdateProjectRequest request) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'replaceProject'");
+        Project existingProject = this.projectRepository.getProjectById(projectId);
+        if (existingProject == null) {
+            throw new BusinessRuleViolationException("Project not found");
+        }
+
+        existingProject.setTitle(request.title());
+        existingProject.setDescription(request.description());
+        existingProject.setCompleted(request.completed() != null ? request.completed() : false);
+
+        this.projectRepository.saveProject(existingProject);
+
+        return Optional.of(this.projectMapper.mapProjectToResponse(existingProject));
     }
 
     public void removeProject(String projectId) {

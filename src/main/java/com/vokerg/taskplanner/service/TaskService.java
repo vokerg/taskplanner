@@ -15,37 +15,27 @@ import com.vokerg.taskplanner.mapper.TaskMapper;
 import com.vokerg.taskplanner.model.Task;
 import com.vokerg.taskplanner.model.TaskPriority;
 import com.vokerg.taskplanner.model.TaskStatus;
+import com.vokerg.taskplanner.repository.TaskRepository;
 
 @Service
 public class TaskService {
 
     private final TaskMapper taskMapper;
     private final ProjectService projectService;
+    private final TaskRepository taskRepository;
 
-    public TaskService(TaskMapper taskMapper, ProjectService projectService) {
+    public TaskService(TaskMapper taskMapper, ProjectService projectService, TaskRepository taskRepository) {
         this.taskMapper = taskMapper;
         this.projectService = projectService;
+        this.taskRepository = taskRepository;
     }
 
     public List<TaskResponse> getTasksForProject(String projectId) {
-        // Implementation for fetching tasks for a specific project
-        return List.of(this.taskMapper.mapTaskToResponse(this.createStubTask("task-1", projectId)));
-    }
-
-    private Task createStubTask(String taskId, String projectId) {
-        Task task = new Task();
-        task.setId(taskId);
-        task.setTitle("Sample task");
-        task.setDescription("Stub response until persistence is added");
-        task.setStatus(TaskStatus.TODO);
-        task.setPriority(TaskPriority.MEDIUM);
-        task.setProjectId(projectId);
-        task.setCreatedAt(Instant.now());
-        return task;
+        return List.of(this.taskMapper.mapTaskToResponse(this.taskRepository.getTasksByProjectId(projectId)));
     }
 
     public Optional<TaskResponse> getTaskById(String taskId) {
-        return Optional.of(createStubTask(taskId, null)).map(task -> this.taskMapper.mapTaskToResponse(task));
+        return Optional.of(this.taskRepository.getTaskById(taskId)).map(task -> this.taskMapper.mapTaskToResponse(task));
     }
 
     public TaskResponse createTask(String projectId, CreateTaskRequest request) {
@@ -70,7 +60,7 @@ public class TaskService {
     }
 
     public Optional<TaskResponse> changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
-        Task existingTask = createStubTask(taskId, null);
+        Task existingTask = this.taskRepository.getTaskById(taskId);
         if (!allowedStatusTransition(existingTask.getStatus(), request.status())) {
 
             throw new BusinessRuleViolationException("Cannot move task back to IN_PROGRESS from DONE");
@@ -80,7 +70,9 @@ public class TaskService {
     }
 
     private boolean allowedStatusTransition(TaskStatus status, TaskStatus status2) {
-        if (status == TaskStatus.DONE && status2 == TaskStatus.IN_PROGRESS) {
+        if ((status == TaskStatus.DONE && status2 == TaskStatus.IN_PROGRESS)
+            || (status == TaskStatus.DONE && status2 == TaskStatus.TODO))
+             {
             return false;
         }
         return true;
@@ -90,7 +82,7 @@ public class TaskService {
     }
 
     public Optional<TaskResponse> replaceTask(String taskId, UpdateTaskRequest task) {
-        Task existingTask = createStubTask(taskId, null);
+        Task existingTask = this.taskRepository.getTaskById(taskId);
             existingTask.setTitle(task.title());
             existingTask.setDescription(task.description());
             existingTask.setPriority(task.priority());
