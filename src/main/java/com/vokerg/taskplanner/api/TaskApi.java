@@ -1,8 +1,5 @@
 package com.vokerg.taskplanner.api;
 
-import java.net.URI;
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,8 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.vokerg.taskplanner.dto.ChangeTaskStatus;
-import com.vokerg.taskplanner.dto.CreateTaskRequest;
+import com.vokerg.taskplanner.dto.ChangeTaskStatusRequest;
 import com.vokerg.taskplanner.dto.TaskResponse;
 import com.vokerg.taskplanner.dto.UpdateTaskRequest;
 import com.vokerg.taskplanner.service.TaskService;
@@ -32,27 +28,9 @@ public class TaskApi {
         this.taskService = taskService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<TaskResponse>> getTasks() {
-        return ResponseEntity.ok(List.of());
-    }
-
     @GetMapping("/{taskId}")
     public ResponseEntity<TaskResponse> getTaskById(@PathVariable String taskId) {
         return ResponseEntity.of(this.taskService.getTaskById(taskId));
-    }
-
-    @PostMapping
-    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody CreateTaskRequest request) {
-        TaskResponse createdTask = this.taskService.createTask(request);
-        return ResponseEntity
-            .created(URI.create("/api/tasks/" + createdTask.id()))
-            .body(createdTask);
-    }
-
-    @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<TaskResponse>> getTasksByProjectId(@PathVariable String projectId) {
-        return ResponseEntity.ok(this.taskService.getTasksForProject(projectId));
     }
 
     @DeleteMapping("/{taskId}")
@@ -63,15 +41,11 @@ public class TaskApi {
 
     @PutMapping("/{taskId}")
     public ResponseEntity<TaskResponse> replaceTask(@PathVariable String taskId, @Valid @RequestBody UpdateTaskRequest task) {
-        return this.taskService.replaceTask(taskId, task)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.of(this.taskService.replaceTask(taskId, task));
     }
 
-    @PatchMapping("/{taskId}")
-    public ResponseEntity<TaskResponse> updateTask(@PathVariable String taskId, @Valid @RequestBody ChangeTaskStatus request) {
-        return this.taskService.changeTaskStatus(taskId, request)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
+    @PatchMapping("/{taskId}/status")
+    public ResponseEntity<TaskResponse> updateTaskStatus(@PathVariable String taskId, @Valid @RequestBody ChangeTaskStatusRequest request) {
+        return ResponseEntity.of(this.taskService.changeTaskStatus(taskId, request));
     }
 }

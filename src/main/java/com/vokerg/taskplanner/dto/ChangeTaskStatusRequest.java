@@ -4,7 +4,7 @@ import com.vokerg.taskplanner.model.TaskStatus;
 
 import jakarta.validation.constraints.NotNull;
 
-public record ChangeTaskStatus(
+public record ChangeTaskStatusRequest(
     @NotNull
     TaskStatus status
 ) {

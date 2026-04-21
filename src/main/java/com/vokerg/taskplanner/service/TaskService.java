@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.vokerg.taskplanner.dto.ChangeTaskStatus;
+import com.vokerg.taskplanner.dto.ChangeTaskStatusRequest;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
 import com.vokerg.taskplanner.dto.TaskResponse;
 import com.vokerg.taskplanner.dto.UpdateTaskRequest;
@@ -45,7 +45,7 @@ public class TaskService {
         return Optional.of(createStubTask(taskId, null)).map(task -> this.taskMapper.mapTaskToResponse(task));
     }
 
-    public TaskResponse createTask(CreateTaskRequest request) {
+    public TaskResponse createTask(String projectId, CreateTaskRequest request) {
         Task createdTask = new Task();
         Instant now = Instant.now();
 
@@ -55,12 +55,13 @@ public class TaskService {
         createdTask.setCreatedAt(now);
         createdTask.setStatus(TaskStatus.TODO);
         createdTask.setPriority(request.priority() != null ? request.priority() : TaskPriority.MEDIUM);
+        createdTask.setProjectId(projectId);
         createdTask.setDueDate(request.dueDate());
 
         return this.taskMapper.mapTaskToResponse(createdTask);
     }
 
-    public Optional<TaskResponse> changeTaskStatus(String taskId, ChangeTaskStatus request) {
+    public Optional<TaskResponse> changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
         Task existingTask = createStubTask(taskId, null);
         existingTask.setStatus(request.status());
         return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
@@ -70,7 +71,12 @@ public class TaskService {
     }
 
     public Optional<TaskResponse> replaceTask(String taskId, UpdateTaskRequest task) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'replaceTask'");
+        Task existingTask = createStubTask(taskId, null);
+            existingTask.setTitle(task.title());
+            existingTask.setDescription(task.description());
+            existingTask.setPriority(task.priority());
+            existingTask.setDueDate(task.dueDate());
+            
+            return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
     }
 }

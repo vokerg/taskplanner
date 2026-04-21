@@ -15,9 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vokerg.taskplanner.dto.CreateProjectRequest;
+import com.vokerg.taskplanner.dto.CreateTaskRequest;
 import com.vokerg.taskplanner.dto.ProjectResponse;
+import com.vokerg.taskplanner.dto.TaskResponse;
 import com.vokerg.taskplanner.dto.UpdateProjectRequest;
 import com.vokerg.taskplanner.service.ProjectService;
+import com.vokerg.taskplanner.service.TaskService;
 
 import jakarta.validation.Valid;
 
@@ -26,9 +29,11 @@ import jakarta.validation.Valid;
 public class ProjectApi {
 
     private final ProjectService projectService;
+    private final TaskService taskService;
 
-    public ProjectApi(ProjectService projectService) {
+    public ProjectApi(ProjectService projectService, TaskService taskService) {
         this.projectService = projectService;
+        this.taskService = taskService;
     }
 
     @GetMapping
@@ -49,6 +54,19 @@ public class ProjectApi {
             .body(createdProject);
     }
 
+    @PostMapping("/{projectId}/tasks")
+    public ResponseEntity<TaskResponse> createTask(@PathVariable String projectId, @Valid @RequestBody CreateTaskRequest request) {
+        TaskResponse createdTask = this.taskService.createTask(projectId, request);
+        return ResponseEntity
+            .created(URI.create("/api/tasks/" + createdTask.id()))
+            .body(createdTask);
+    }
+
+    @GetMapping("/{projectId}/tasks")
+    public ResponseEntity<List<TaskResponse>> getTasksByProjectId(@PathVariable String projectId) {
+        return ResponseEntity.ok(this.taskService.getTasksForProject(projectId));
+    }
+
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(@PathVariable String projectId) {
         this.projectService.removeProject(projectId);
@@ -57,15 +75,11 @@ public class ProjectApi {
 
     @PutMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> replaceProject(@PathVariable String projectId, @RequestBody UpdateProjectRequest project) {
-        return this.projectService.replaceProject(projectId, project)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.of(this.projectService.replaceProject(projectId, project));
     }
 
     @PatchMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable String projectId, @Valid @RequestBody UpdateProjectRequest request) {
-        return this.projectService.updateProject(projectId, request)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.of(this.projectService.updateProject(projectId, request));
     }
 }
