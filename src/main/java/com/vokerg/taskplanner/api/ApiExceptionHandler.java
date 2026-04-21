@@ -9,9 +9,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.vokerg.taskplanner.service.BusinessRuleViolationException;
-import com.vokerg.taskplanner.service.ProjectNotFoundException;
-import com.vokerg.taskplanner.service.TaskNotFoundException;
+import com.vokerg.taskplanner.exception.BusinessRuleViolationException;
+import com.vokerg.taskplanner.exception.ProjectNotFoundException;
+import com.vokerg.taskplanner.exception.TaskNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
 

@@ -1,4 +1,4 @@
-package com.vokerg.taskplanner.service;
+package com.vokerg.taskplanner.exception;
 
 public class TaskNotFoundException extends RuntimeException {
 
