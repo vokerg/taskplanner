@@ -74,7 +74,7 @@ public class ProjectApi {
     }
 
     @PutMapping("/{projectId}")
-    public ResponseEntity<ProjectResponse> replaceProject(@PathVariable String projectId, @RequestBody UpdateProjectRequest project) {
+    public ResponseEntity<ProjectResponse> replaceProject(@PathVariable String projectId, @Valid @RequestBody UpdateProjectRequest project) {
         return ResponseEntity.of(this.projectService.replaceProject(projectId, project));
     }
 
