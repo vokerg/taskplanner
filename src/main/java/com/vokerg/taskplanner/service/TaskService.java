@@ -42,7 +42,8 @@ public class TaskService {
     }
 
     public TaskResponse createTask(String projectId, CreateTaskRequest request) {
-        ProjectResponse projectResponse = this.projectService.getProjectById(projectId).orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ProjectResponse projectResponse = this.projectService.getProjectById(projectId)
+            .orElseThrow(() -> new ProjectNotFoundException(projectId));
         if (projectResponse.completed()) {
             throw new BusinessRuleViolationException("Cannot add task to a completed project");
         }
