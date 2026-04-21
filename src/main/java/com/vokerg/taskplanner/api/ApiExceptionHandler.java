@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.vokerg.taskplanner.service.BusinessRuleViolationException;
 import com.vokerg.taskplanner.service.ProjectNotFoundException;
+import com.vokerg.taskplanner.service.TaskNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -20,6 +21,14 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ProjectNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleProjectNotFound(
         ProjectNotFoundException exception,
+        HttpServletRequest request
+    ) {
+        return this.buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleTaskNotFound(
+        TaskNotFoundException exception,
         HttpServletRequest request
     ) {
         return this.buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);

@@ -2,7 +2,6 @@ package com.vokerg.taskplanner.service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -36,9 +35,12 @@ public class TaskService {
             .toList();
     }
 
-    public Optional<TaskResponse> getTaskById(String taskId) {
-        return Optional.ofNullable(this.taskRepository.getTaskById(taskId))
-            .map(this.taskMapper::mapTaskToResponse);
+    public TaskResponse getTaskById(String taskId) {
+        Task task = this.taskRepository.getTaskById(taskId);
+        if (task == null) {
+            throw new TaskNotFoundException(taskId);
+        }
+        return this.taskMapper.mapTaskToResponse(task);
     }
 
     public TaskResponse createTask(String projectId, CreateTaskRequest request) {
@@ -65,10 +67,10 @@ public class TaskService {
         return this.taskMapper.mapTaskToResponse(createdTask);
     }
 
-    public Optional<TaskResponse> changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
+    public TaskResponse changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
         Task existingTask = this.taskRepository.getTaskById(taskId);
         if (existingTask == null) {
-            return Optional.empty();
+            throw new TaskNotFoundException(taskId);
         }
         if (!allowedStatusTransition(existingTask.getStatus(), request.status())) {
 
@@ -76,7 +78,7 @@ public class TaskService {
         }
         existingTask.setStatus(request.status());
         this.taskRepository.saveTask(existingTask);
-        return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
+        return this.taskMapper.mapTaskToResponse(existingTask);
     }
 
     private boolean allowedStatusTransition(TaskStatus status, TaskStatus status2) {
@@ -92,10 +94,10 @@ public class TaskService {
         this.taskRepository.deleteTask(taskId);
     }
 
-    public Optional<TaskResponse> replaceTask(String taskId, UpdateTaskRequest task) {
+    public TaskResponse replaceTask(String taskId, UpdateTaskRequest task) {
         Task existingTask = this.taskRepository.getTaskById(taskId);
         if (existingTask == null) {
-            return Optional.empty();
+            throw new TaskNotFoundException(taskId);
         }
         existingTask.setTitle(task.title());
         existingTask.setDescription(task.description());
@@ -103,6 +105,6 @@ public class TaskService {
         existingTask.setDueDate(task.dueDate());
         this.taskRepository.saveTask(existingTask);
 
-        return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
+        return this.taskMapper.mapTaskToResponse(existingTask);
     }
 }

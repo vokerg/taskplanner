@@ -29,7 +29,7 @@ public class TaskApi {
 
     @GetMapping("/{taskId}")
     public ResponseEntity<TaskResponse> getTaskById(@PathVariable String taskId) {
-        return ResponseEntity.of(this.taskService.getTaskById(taskId));
+        return ResponseEntity.ok(this.taskService.getTaskById(taskId));
     }
 
     @DeleteMapping("/{taskId}")
@@ -40,11 +40,11 @@ public class TaskApi {
 
     @PutMapping("/{taskId}")
     public ResponseEntity<TaskResponse> replaceTask(@PathVariable String taskId, @Valid @RequestBody UpdateTaskRequest task) {
-        return ResponseEntity.of(this.taskService.replaceTask(taskId, task));
+        return ResponseEntity.ok(this.taskService.replaceTask(taskId, task));
     }
 
     @PatchMapping("/{taskId}/status")
     public ResponseEntity<TaskResponse> updateTaskStatus(@PathVariable String taskId, @Valid @RequestBody ChangeTaskStatusRequest request) {
-        return ResponseEntity.of(this.taskService.changeTaskStatus(taskId, request));
+        return ResponseEntity.ok(this.taskService.changeTaskStatus(taskId, request));
     }
 }
