@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.vokerg.taskplanner.dto.ChangeTaskStatusRequest;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
+import com.vokerg.taskplanner.dto.ProjectResponse;
 import com.vokerg.taskplanner.dto.TaskResponse;
 import com.vokerg.taskplanner.dto.UpdateTaskRequest;
 import com.vokerg.taskplanner.mapper.TaskMapper;
@@ -19,9 +20,11 @@ import com.vokerg.taskplanner.model.TaskStatus;
 public class TaskService {
 
     private final TaskMapper taskMapper;
+    private final ProjectService projectService;
 
-    public TaskService(TaskMapper taskMapper) {
+    public TaskService(TaskMapper taskMapper, ProjectService projectService) {
         this.taskMapper = taskMapper;
+        this.projectService = projectService;
     }
 
     public List<TaskResponse> getTasksForProject(String projectId) {
@@ -46,6 +49,11 @@ public class TaskService {
     }
 
     public TaskResponse createTask(String projectId, CreateTaskRequest request) {
+        ProjectResponse projectResponse = this.projectService.getProjectById(projectId).orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        if (projectResponse.completed()) {
+            throw new BusinessRuleViolationException("Cannot add task to a completed project");
+        }
+
         Task createdTask = new Task();
         Instant now = Instant.now();
 
@@ -63,8 +71,19 @@ public class TaskService {
 
     public Optional<TaskResponse> changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
         Task existingTask = createStubTask(taskId, null);
+        if (!allowedStatusTransition(existingTask.getStatus(), request.status())) {
+
+            throw new BusinessRuleViolationException("Cannot move task back to IN_PROGRESS from DONE");
+        }
         existingTask.setStatus(request.status());
         return Optional.of(this.taskMapper.mapTaskToResponse(existingTask));
+    }
+
+    private boolean allowedStatusTransition(TaskStatus status, TaskStatus status2) {
+        if (status == TaskStatus.DONE && status2 == TaskStatus.IN_PROGRESS) {
+            return false;
+        }
+        return true;
     }
 
     public void removeTask(String taskId) {
