@@ -3,6 +3,7 @@ package com.vokerg.taskplanner.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import com.vokerg.taskplanner.dto.CreateProjectRequest;
@@ -24,13 +25,13 @@ public class ProjectService {
     }
 
     public List<ProjectResponse> getAllProjects() {
-        return this.projectRepository.getAllProjects().stream()
-                .map(this.projectMapper::mapProjectToResponse)
-                .toList();
+        return this.projectRepository.findAll().stream()
+            .map(this.projectMapper::mapProjectToResponse)
+            .toList();
     }
 
     public Optional<ProjectResponse> getProjectById(String projectId) {
-        return Optional.ofNullable(this.projectRepository.getProjectById(projectId))
+        return this.projectRepository.findById(projectId)
             .map(this.projectMapper::mapProjectToResponse);
     }
 
@@ -44,17 +45,18 @@ public class ProjectService {
         createdProject.setCreatedAt(now);
         createdProject.setCompleted(false);
 
-        this.projectRepository.saveProject(createdProject);
+        this.projectRepository.save(createdProject);
 
         return this.projectMapper.mapProjectToResponse(createdProject);
     }
 
     public Optional<ProjectResponse> updateProject(String projectId, UpdateProjectRequest request) {
-        Project existingProject = this.projectRepository.getProjectById(projectId);
-        if (existingProject == null) {
+        Optional<Project> existingProjectOptional = this.projectRepository.findById(projectId);
+        if (existingProjectOptional.isEmpty()) {
             return Optional.empty();
         }
-        
+        Project existingProject = existingProjectOptional.get();
+
         if (request.title() != null) {
             existingProject.setTitle(request.title());
         }
@@ -65,27 +67,28 @@ public class ProjectService {
             existingProject.setCompleted(request.completed());
         }
 
-        this.projectRepository.saveProject(existingProject);
-        
+        this.projectRepository.save(existingProject);
+
         return Optional.of(this.projectMapper.mapProjectToResponse(existingProject));
     }
 
     public Optional<ProjectResponse> replaceProject(String projectId, UpdateProjectRequest request) {
-        Project existingProject = this.projectRepository.getProjectById(projectId);
-        if (existingProject == null) {
+        Optional<Project> existingProjectOptional = this.projectRepository.findById(projectId);
+        if (existingProjectOptional.isEmpty()) {
             return Optional.empty();
         }
+        Project existingProject = existingProjectOptional.get();
 
         existingProject.setTitle(request.title());
         existingProject.setDescription(request.description());
         existingProject.setCompleted(request.completed() != null ? request.completed() : false);
 
-        this.projectRepository.saveProject(existingProject);
+        this.projectRepository.save(existingProject);
 
         return Optional.of(this.projectMapper.mapProjectToResponse(existingProject));
     }
 
     public void removeProject(String projectId) {
-        this.projectRepository.deleteProject(projectId);
+        this.projectRepository.deleteById(projectId);
     }
 }

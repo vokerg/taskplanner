@@ -33,16 +33,14 @@ public class TaskService {
     }
 
     public List<TaskResponse> getTasksForProject(String projectId) {
-        return this.taskRepository.getTasksByProjectId(projectId).stream()
+        return this.taskRepository.findByProjectId(projectId).stream()
             .map(this.taskMapper::mapTaskToResponse)
             .toList();
     }
 
     public TaskResponse getTaskById(String taskId) {
-        Task task = this.taskRepository.getTaskById(taskId);
-        if (task == null) {
-            throw new TaskNotFoundException(taskId);
-        }
+        Task task = this.taskRepository.findById(taskId)
+            .orElseThrow(() -> new TaskNotFoundException(taskId));
         return this.taskMapper.mapTaskToResponse(task);
     }
 
@@ -65,48 +63,39 @@ public class TaskService {
         createdTask.setProjectId(projectId);
         createdTask.setDueDate(request.dueDate());
 
-        this.taskRepository.saveTask(createdTask);
+        this.taskRepository.save(createdTask);
 
         return this.taskMapper.mapTaskToResponse(createdTask);
     }
 
     public TaskResponse changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
-        Task existingTask = this.taskRepository.getTaskById(taskId);
-        if (existingTask == null) {
-            throw new TaskNotFoundException(taskId);
-        }
+        Task existingTask = this.taskRepository.findById(taskId)
+            .orElseThrow(() -> new TaskNotFoundException(taskId));
         if (!allowedStatusTransition(existingTask.getStatus(), request.status())) {
-
             throw new BusinessRuleViolationException("Cannot move task back to IN_PROGRESS from DONE");
         }
         existingTask.setStatus(request.status());
-        this.taskRepository.saveTask(existingTask);
+        this.taskRepository.save(existingTask);
         return this.taskMapper.mapTaskToResponse(existingTask);
     }
 
-    private boolean allowedStatusTransition(TaskStatus status, TaskStatus status2) {
-        if ((status == TaskStatus.DONE && status2 == TaskStatus.IN_PROGRESS)
-            || (status == TaskStatus.DONE && status2 == TaskStatus.TODO))
-             {
-            return false;
-        }
-        return true;
+    private boolean allowedStatusTransition(TaskStatus status, TaskStatus nextStatus) {
+        return !((status == TaskStatus.DONE && nextStatus == TaskStatus.IN_PROGRESS)
+            || (status == TaskStatus.DONE && nextStatus == TaskStatus.TODO));
     }
 
     public void removeTask(String taskId) {
-        this.taskRepository.deleteTask(taskId);
+        this.taskRepository.deleteById(taskId);
     }
 
     public TaskResponse replaceTask(String taskId, UpdateTaskRequest task) {
-        Task existingTask = this.taskRepository.getTaskById(taskId);
-        if (existingTask == null) {
-            throw new TaskNotFoundException(taskId);
-        }
+        Task existingTask = this.taskRepository.findById(taskId)
+            .orElseThrow(() -> new TaskNotFoundException(taskId));
         existingTask.setTitle(task.title());
         existingTask.setDescription(task.description());
         existingTask.setPriority(task.priority());
         existingTask.setDueDate(task.dueDate());
-        this.taskRepository.saveTask(existingTask);
+        this.taskRepository.save(existingTask);
 
         return this.taskMapper.mapTaskToResponse(existingTask);
     }
