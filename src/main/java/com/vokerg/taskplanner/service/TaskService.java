@@ -14,9 +14,11 @@ import com.vokerg.taskplanner.exception.BusinessRuleViolationException;
 import com.vokerg.taskplanner.exception.ProjectNotFoundException;
 import com.vokerg.taskplanner.exception.TaskNotFoundException;
 import com.vokerg.taskplanner.mapper.TaskMapper;
+import com.vokerg.taskplanner.model.Project;
 import com.vokerg.taskplanner.model.Task;
 import com.vokerg.taskplanner.model.TaskPriority;
 import com.vokerg.taskplanner.model.TaskStatus;
+import com.vokerg.taskplanner.repository.ProjectRepository;
 import com.vokerg.taskplanner.repository.TaskRepository;
 
 @Service
@@ -24,11 +26,18 @@ public class TaskService {
 
     private final TaskMapper taskMapper;
     private final ProjectService projectService;
+    private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
 
-    public TaskService(TaskMapper taskMapper, ProjectService projectService, TaskRepository taskRepository) {
+    public TaskService(
+        TaskMapper taskMapper,
+        ProjectService projectService,
+        ProjectRepository projectRepository,
+        TaskRepository taskRepository
+    ) {
         this.taskMapper = taskMapper;
         this.projectService = projectService;
+        this.projectRepository = projectRepository;
         this.taskRepository = taskRepository;
     }
 
@@ -50,6 +59,8 @@ public class TaskService {
         if (projectResponse.completed()) {
             throw new BusinessRuleViolationException("Cannot add task to a completed project");
         }
+        Project project = this.projectRepository.findById(projectId)
+            .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
         Task createdTask = new Task();
         Instant now = Instant.now();
@@ -59,7 +70,7 @@ public class TaskService {
         createdTask.setCreatedAt(now);
         createdTask.setStatus(TaskStatus.TODO);
         createdTask.setPriority(request.priority() != null ? request.priority() : TaskPriority.MEDIUM);
-        createdTask.setProjectId(projectId);
+        createdTask.setProject(project);
         createdTask.setDueDate(request.dueDate());
 
         this.taskRepository.save(createdTask);
