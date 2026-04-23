@@ -39,7 +39,6 @@ public class ProjectService {
         Project createdProject = new Project();
         Instant now = Instant.now();
 
-        createdProject.setId("project-" + now.toEpochMilli());
         createdProject.setTitle(request.title());
         createdProject.setDescription(request.description());
         createdProject.setCreatedAt(now);

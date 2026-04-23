@@ -54,7 +54,6 @@ public class TaskService {
         Task createdTask = new Task();
         Instant now = Instant.now();
 
-        createdTask.setId("task-" + now.toEpochMilli());
         createdTask.setTitle(request.title());
         createdTask.setDescription(request.description());
         createdTask.setCreatedAt(now);
