@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" ng-app="taskplannerUi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Taskplanner UI</title>
+    <link rel="stylesheet" href="/ui/styles.css">
+</head>
+<body ng-controller="TaskplannerController as vm">
+    <div class="shell">
+        <section class="hero">
+            <div class="hero-card">
+                <h1>Taskplanner playground</h1>
+                <p>
+                    Temporary Angular UI for browsing sample projects, filtering tasks, and poking at the API.
+                </p>
+                <div class="hero-meta">
+                    <span class="pill">{{ vm.projects.length }} projects loaded</span>
+                    <span class="pill">{{ vm.tasks.length }} tasks shown</span>
+                    <span class="pill">Swagger still lives at /</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="layout">
+            <aside class="panel sidebar">
+                <div class="sidebar-header">
+                    <div>
+                        <p class="eyebrow">Projects</p>
+                        <h2>Pick a workspace</h2>
+                    </div>
+                    <button class="ghost-button" type="button" ng-click="vm.loadProjects()">Reload</button>
+                </div>
+
+                <div class="loading" ng-if="vm.projectsLoading">Loading projects...</div>
+                <div class="empty" ng-if="!vm.projectsLoading && !vm.projects.length">No projects found.</div>
+
+                <div class="project-list" ng-if="vm.projects.length">
+                    <button
+                        ng-repeat="project in vm.projects track by project.id"
+                        type="button"
+                        class="project-card"
+                        ng-class="{ active: project.id === vm.selectedProjectId }"
+                        ng-click="vm.selectProject(project.id)">
+                        <div class="project-title-row">
+                            <h3 class="project-title">{{ project.title }}</h3>
+                            <span class="badge" ng-class="project.completed ? 'done' : 'progress'">
+                                {{ project.completed ? 'Done' : 'Active' }}
+                            </span>
+                        </div>
+                        <p class="project-description">{{ project.description }}</p>
+                        <p class="tiny">Created {{ vm.formatDate(project.createdAt) }}</p>
+                    </button>
+                </div>
+            </aside>
+
+            <main class="panel content">
+                <div class="content-header">
+                    <div>
+                        <p class="eyebrow">Tasks</p>
+                        <h2>{{ vm.selectedProjectTitle || 'Choose a project' }}</h2>
+                    </div>
+                    <button class="solid-button" type="button" ng-click="vm.refreshTasks()" ng-disabled="!vm.selectedProjectId">
+                        Refresh tasks
+                    </button>
+                </div>
+
+                <div class="error" ng-if="vm.errorMessage">{{ vm.errorMessage }}</div>
+
+                <div class="filters">
+                    <div class="field">
+                        <label for="status">Status</label>
+                        <select id="status" ng-model="vm.filters.status">
+                            <option value="">All</option>
+                            <option value="TODO">TODO</option>
+                            <option value="IN_PROGRESS">IN_PROGRESS</option>
+                            <option value="DONE">DONE</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="priority">Priority</label>
+                        <select id="priority" ng-model="vm.filters.priority">
+                            <option value="">All</option>
+                            <option value="LOW">LOW</option>
+                            <option value="MEDIUM">MEDIUM</option>
+                            <option value="HIGH">HIGH</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="dueDateAfter">Due date after</label>
+                        <input id="dueDateAfter" type="datetime-local" ng-model="vm.filters.dueDateAfter">
+                    </div>
+
+                    <div class="field">
+                        <label for="dueDateBefore">Due date before</label>
+                        <input id="dueDateBefore" type="datetime-local" ng-model="vm.filters.dueDateBefore">
+                    </div>
+
+                    <div class="field">
+                        <label for="sortBy">Sort by</label>
+                        <select id="sortBy" ng-model="vm.filters.sortBy">
+                            <option value="">Default</option>
+                            <option value="name">name</option>
+                            <option value="dueDate">dueDate</option>
+                            <option value="status">status</option>
+                            <option value="priority">priority</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="solid-button" type="button" ng-click="vm.refreshTasks()" ng-disabled="!vm.selectedProjectId">Apply filters</button>
+                    <button class="ghost-button" type="button" ng-click="vm.resetFilters()" ng-disabled="!vm.selectedProjectId">Reset</button>
+                </div>
+
+                <div class="loading" style="margin-top: 18px;" ng-if="vm.tasksLoading">Loading tasks...</div>
+                <div class="empty" style="margin-top: 18px;" ng-if="!vm.tasksLoading && vm.selectedProjectId && !vm.tasks.length">
+                    No tasks matched the current filters.
+                </div>
+                <div class="empty" style="margin-top: 18px;" ng-if="!vm.selectedProjectId">
+                    Select a project from the left to start exploring tasks.
+                </div>
+
+                <div class="task-grid" style="margin-top: 18px;" ng-if="vm.tasks.length">
+                    <article class="task-card" ng-repeat="task in vm.tasks track by task.id">
+                        <div class="task-topline">
+                            <h3>{{ task.title }}</h3>
+                            <div class="task-meta">
+                                <span class="badge" ng-class="vm.statusBadgeClass(task.status)">{{ task.status }}</span>
+                                <span class="badge" ng-class="vm.priorityBadgeClass(task.priority)">{{ task.priority }}</span>
+                            </div>
+                        </div>
+                        <p>{{ task.description }}</p>
+                        <div class="task-bottomline">
+                            <div class="task-dates">
+                                <span>Created {{ vm.formatDate(task.createdAt) }}</span>
+                                <span ng-if="task.dueDate">Due {{ vm.formatDate(task.dueDate) }}</span>
+                                <span ng-if="!task.dueDate">No due date</span>
+                            </div>
+                            <span class="tiny">{{ task.id }}</span>
+                        </div>
+                    </article>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+    <script type="module" src="/ui/main.js"></script>
+</body>
+</html>
