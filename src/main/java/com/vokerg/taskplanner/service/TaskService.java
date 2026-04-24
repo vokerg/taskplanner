@@ -1,10 +1,14 @@
 package com.vokerg.taskplanner.service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.domain.Specification;
 
+import com.vokerg.taskplanner.api.TaskSortBy;
 import com.vokerg.taskplanner.dto.ChangeTaskStatusRequest;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
 import com.vokerg.taskplanner.dto.ProjectResponse;
@@ -41,8 +45,42 @@ public class TaskService {
         this.taskRepository = taskRepository;
     }
 
-    public List<TaskResponse> getTasksForProject(String projectId) {
-        return this.taskRepository.findByProjectId(projectId).stream()
+    public List<TaskResponse> getTasksForProject(String projectId, TaskStatus status, TaskPriority priority) {
+        return this.getTasksForProject(projectId, status, priority, null, null, null);
+    }
+
+    public List<TaskResponse> getTasksForProject(
+        String projectId,
+        TaskStatus status,
+        TaskPriority priority,
+        Instant dueDateAfter,
+        Instant dueDateBefore,
+        TaskSortBy sortBy
+    ) {
+        Specification<Task> specification = (root, query, criteriaBuilder) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("projectId"), projectId));
+
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+            if (priority != null) {
+                predicates.add(criteriaBuilder.equal(root.get("priority"), priority));
+            }
+            if (dueDateAfter != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dueDate"), dueDateAfter));
+            }
+            if (dueDateBefore != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dueDate"), dueDateBefore));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
+
+        Sort sort = sortBy == null ? Sort.unsorted() : Sort.by(Sort.Direction.ASC, sortBy.property());
+        List<Task> tasks = this.taskRepository.findAll(specification, sort);
+
+        return tasks.stream()
             .map(this.taskMapper::mapTaskToResponse)
             .toList();
     }
