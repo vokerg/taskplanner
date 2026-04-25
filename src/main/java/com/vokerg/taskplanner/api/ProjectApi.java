@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vokerg.taskplanner.dto.CreateProjectRequest;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
 import com.vokerg.taskplanner.dto.ProjectResponse;
+import com.vokerg.taskplanner.dto.TaskEnvelopeResponse;
 import com.vokerg.taskplanner.dto.TaskResponse;
 import com.vokerg.taskplanner.dto.UpdateProjectRequest;
 import com.vokerg.taskplanner.model.TaskPriority;
@@ -69,7 +70,7 @@ public class ProjectApi {
     }
 
     @GetMapping("/{projectId}/tasks")
-    public ResponseEntity<List<TaskResponse>> getTasksByProjectId(
+    public ResponseEntity<TaskEnvelopeResponse> getTasksByProjectId(
         @Parameter(description = "Project ID to fetch tasks for", example = "550e8400-e29b-41d4-a716-446655440000")
         @PathVariable String projectId,
         @Parameter(description = "Optional task status filter", example = "IN_PROGRESS")
@@ -83,9 +84,13 @@ public class ProjectApi {
         @Parameter(description = "Optional sort field: name, dueDate, status, or priority", example = "dueDate")
         @RequestParam(required = false) TaskSortBy sortBy,
         @Parameter(description = "Optional sort direction: asc or desc", example = "desc")
-        @RequestParam(required = false) TaskSortDirection sortDirection
+        @RequestParam(required = false) TaskSortDirection sortDirection,
+        @Parameter(description = "Optional page number for pagination", example = "0")
+        @RequestParam(required = false) Integer page,
+        @Parameter(description = "Optional page size for pagination", example = "10")
+        @RequestParam(required = false) Integer size
     ) {
-        return ResponseEntity.ok(this.taskService.getTasksForProject(projectId, status, priority, dueDateAfter, dueDateBefore, sortBy, sortDirection));
+        return ResponseEntity.ok(this.taskService.getTasksForProject(projectId, status, priority, dueDateAfter, dueDateBefore, sortBy, sortDirection, page, size));
     }
 
     @DeleteMapping("/{projectId}")

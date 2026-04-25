@@ -4,6 +4,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,6 +16,7 @@ import com.vokerg.taskplanner.api.TaskSortBy;
 import com.vokerg.taskplanner.dto.ChangeTaskStatusRequest;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
 import com.vokerg.taskplanner.dto.ProjectResponse;
+import com.vokerg.taskplanner.dto.TaskEnvelopeResponse;
 import com.vokerg.taskplanner.dto.TaskResponse;
 import com.vokerg.taskplanner.dto.UpdateTaskRequest;
 import com.vokerg.taskplanner.exception.BusinessRuleViolationException;
@@ -46,18 +50,14 @@ public class TaskService {
         this.taskRepository = taskRepository;
     }
 
-    public List<TaskResponse> getTasksForProject(String projectId, TaskStatus status, TaskPriority priority) {
-        return this.getTasksForProject(projectId, status, priority, null, null, null, null);
-    }
-
-    public List<TaskResponse> getTasksForProject(
+    public TaskEnvelopeResponse getTasksForProject(
         String projectId,
         TaskStatus status,
         TaskPriority priority,
         Instant dueDateAfter,
         Instant dueDateBefore,
         TaskSortBy sortBy,
-        TaskSortDirection sortDirection
+        TaskSortDirection sortDirection, Integer page, Integer size
     ) {
         Specification<Task> specification = (root, query, criteriaBuilder) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
@@ -75,17 +75,24 @@ public class TaskService {
             if (dueDateBefore != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dueDate"), dueDateBefore));
             }
-
             return criteriaBuilder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
         };
 
         Sort.Direction direction = sortDirection == null ? Sort.Direction.ASC : sortDirection.direction();
         Sort sort = sortBy == null ? Sort.unsorted() : Sort.by(direction, sortBy.property());
-        List<Task> tasks = this.taskRepository.findAll(specification, sort);
 
-        return tasks.stream()
-            .map(this.taskMapper::mapTaskToResponse)
-            .toList();
+        int resolvedPage = page != null && page >= 0 ? page : 0;
+        int resolvedSize = size != null && size > 0 ? size : 20;
+
+        Pageable pageable = PageRequest.of(resolvedPage, resolvedSize, sort);
+        Page<Task> taskPage = this.taskRepository.findAll(specification, pageable);
+
+        List<TaskResponse> items = taskPage.getContent().stream()
+            .map(taskMapper::mapTaskToResponse).toList();
+
+        return new TaskEnvelopeResponse(items, taskPage.getNumber(), taskPage.getSize(), 
+            taskPage.getTotalElements(), taskPage.getTotalPages(), taskPage.hasNext(), taskPage.hasPrevious()
+        );
     }
 
     public TaskResponse getTaskById(String taskId) {
