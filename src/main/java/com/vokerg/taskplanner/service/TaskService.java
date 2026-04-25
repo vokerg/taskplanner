@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.data.jpa.domain.Specification;
 
+import com.vokerg.taskplanner.api.TaskSortDirection;
 import com.vokerg.taskplanner.api.TaskSortBy;
 import com.vokerg.taskplanner.dto.ChangeTaskStatusRequest;
 import com.vokerg.taskplanner.dto.CreateTaskRequest;
@@ -46,7 +47,7 @@ public class TaskService {
     }
 
     public List<TaskResponse> getTasksForProject(String projectId, TaskStatus status, TaskPriority priority) {
-        return this.getTasksForProject(projectId, status, priority, null, null, null);
+        return this.getTasksForProject(projectId, status, priority, null, null, null, null);
     }
 
     public List<TaskResponse> getTasksForProject(
@@ -55,7 +56,8 @@ public class TaskService {
         TaskPriority priority,
         Instant dueDateAfter,
         Instant dueDateBefore,
-        TaskSortBy sortBy
+        TaskSortBy sortBy,
+        TaskSortDirection sortDirection
     ) {
         Specification<Task> specification = (root, query, criteriaBuilder) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
@@ -77,7 +79,8 @@ public class TaskService {
             return criteriaBuilder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
         };
 
-        Sort sort = sortBy == null ? Sort.unsorted() : Sort.by(Sort.Direction.ASC, sortBy.property());
+        Sort.Direction direction = sortDirection == null ? Sort.Direction.ASC : sortDirection.direction();
+        Sort sort = sortBy == null ? Sort.unsorted() : Sort.by(direction, sortBy.property());
         List<Task> tasks = this.taskRepository.findAll(specification, sort);
 
         return tasks.stream()

@@ -80,10 +80,12 @@ public class ProjectApi {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant dueDateBefore,
         @Parameter(description = "Optional filter for tasks due on or after this instant", example = "2026-04-25T00:00:00Z")
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant dueDateAfter,
-        @Parameter(description = "Optional ascending sort field: name, dueDate, status, or priority", example = "dueDate")
-        @RequestParam(required = false) TaskSortBy sortBy
+        @Parameter(description = "Optional sort field: name, dueDate, status, or priority", example = "dueDate")
+        @RequestParam(required = false) TaskSortBy sortBy,
+        @Parameter(description = "Optional sort direction: asc or desc", example = "desc")
+        @RequestParam(required = false) TaskSortDirection sortDirection
     ) {
-        return ResponseEntity.ok(this.taskService.getTasksForProject(projectId, status, priority, dueDateAfter, dueDateBefore, sortBy));
+        return ResponseEntity.ok(this.taskService.getTasksForProject(projectId, status, priority, dueDateAfter, dueDateBefore, sortBy, sortDirection));
     }
 
     @DeleteMapping("/{projectId}")
