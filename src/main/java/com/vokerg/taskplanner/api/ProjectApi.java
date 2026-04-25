@@ -44,8 +44,11 @@ public class ProjectApi {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> getProjects() {
-        return ResponseEntity.ok(this.projectService.getAllProjects());
+    public ResponseEntity<List<ProjectResponse>> getProjects(
+        @Parameter(description = "Text to search for in project title or description", example = "planning")
+        @RequestParam(required = false) String searchText
+    ) {
+        return ResponseEntity.ok(this.projectService.getProjects(searchText));
     }
 
     @GetMapping("/{projectId}")

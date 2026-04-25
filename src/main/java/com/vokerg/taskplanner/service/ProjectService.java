@@ -30,6 +30,19 @@ public class ProjectService {
             .toList();
     }
 
+    public List<ProjectResponse> getProjects(String searchText) {
+        if (searchText != null && !searchText.isBlank()) {
+            String trimmedSearchText = searchText.trim();
+            return this.projectRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+                    trimmedSearchText,
+                    trimmedSearchText
+                ).stream()
+                .map(this.projectMapper::mapProjectToResponse)
+                .toList();
+        }
+        return this.getAllProjects();
+    }
+
     public Optional<ProjectResponse> getProjectById(String projectId) {
         return this.projectRepository.findById(projectId)
             .map(this.projectMapper::mapProjectToResponse);
